@@ -19,12 +19,7 @@ REQUEST_INTERVAL = 6.5
 MAX_BACKOFF = 120
 MAX_CONSECUTIVE_429 = 10
 
-next_id = 1129
-try:
-    with open(CSV_FILE, "r", newline="", encoding="utf-8") as f:
-        next_id = sum(1 for _ in f)
-except:
-    pass
+next_id = 1351
 
 last_request_time = 0
 previous_interaction_id = None
