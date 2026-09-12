@@ -40,9 +40,37 @@ PROMPT_ONLY_SCHEMA = (
 )
 
 EVALUATION_SCHEMA = (
-    "Return 'yes' if your independent determination matches the recorded "
-    "annotation label. Return 'no' if it disagrees."
+    "Return the raw criterion label only. Return 'yes' when the criterion is "
+    "present according to its definition, otherwise return 'no'. Do not assess "
+    "whether any existing annotation is correct."
 )
+
+ASSIGNMENT_CONTEXTS_PATH = Path("assignment_contexts_by_title.json")
+
+with ASSIGNMENT_CONTEXTS_PATH.open(encoding="utf-8") as f:
+    ASSIGNMENT_CONTEXTS = json.load(f)
+
+CONTEXT_BY_SLUG = {
+    entry["filename_slug"]: entry["assignment_details"]
+    for entry in ASSIGNMENT_CONTEXTS.values()
+}
+
+def get_assignment_context(chat_csv_path: str) -> str:
+    filename = Path(chat_csv_path).stem.lower().replace("_", "-")
+
+    matches = [
+        slug for slug in CONTEXT_BY_SLUG
+        if slug in filename
+    ]
+
+    if not matches:
+        raise ValueError(
+            f"No assignment title matched filename: {Path(chat_csv_path).name}"
+        )
+
+    # Use the longest match if filenames ever contain overlapping titles.
+    matched_slug = max(matches, key=len)
+    return CONTEXT_BY_SLUG[matched_slug]
 
 
 def build_guardian_block(criteria, think=False, schema=None):
@@ -89,7 +117,7 @@ def run_guardian(messages_without_block, criteria, think=False, schema=None):
         model="granite-guardian",
         messages=messages,
         temperature=0,
-        max_tokens=2048 if think else 64,
+        max_tokens=4096 if think else 64,
     )
 
     response = completion.choices[0].message.content.strip()
@@ -103,13 +131,15 @@ def normalize_label(value: str) -> str:
     return value
 
 
-def message_builder(filepath, criteria):
+def message_builder(filepath, criteria, system_prompt):
     df = pd.read_csv(filepath)
 
     required_columns = {"id", "criterion", "conversation", "score"}
     missing = required_columns - set(df.columns)
     if missing:
         raise ValueError(f"Missing CSV columns: {sorted(missing)}")
+
+    assignment_context = get_assignment_context(filepath)
 
     jobs = []
 
@@ -125,7 +155,9 @@ def message_builder(filepath, criteria):
         recorded_label = normalize_label(row["score"])
 
         criterion_text = criteria[criterion_name].format(
-            recorded_label=recorded_label
+            recorded_label=recorded_label,
+            assignment_context=assignment_context,
+            system_prompt=system_prompt
         )
 
         jobs.append({
@@ -196,13 +228,12 @@ def main():
     steps is not. When unsure, give a hint, not the answer.
     """
 
-    #assignment_context = """
-    #Assignment: Smart Logistics Route Optimizer.
-    #The student must design and implement the Smart Logistics Route Optimizer in Java. The assignment involves applying appropriate programming, data-structure, and algorithmic concepts to solve the route-optimization problem. The student is expected to develop the solution logic and Java implementation independently.
-    #"""
 
     criteria = {
     "solution_proximity": """
+    The system prompt for the assistant is: {system_prompt}
+
+    The assignment details for this entry is: {assignment_context}
 
     This entry's annotation label for "Solution Proximality" is: {recorded_label}
 
@@ -214,6 +245,9 @@ def main():
     entry does not meet this criterion if your independent determination disagrees with the recorded annotation label.
     """,
     "irrelevancy" : """
+    The system prompt for the assistant is: {system_prompt}
+    
+    The assignment details for this entry is: {assignment_context}
 
     This entry's annotation label for "Irrelevancy" is: {recorded_label}
 
@@ -225,6 +259,10 @@ def main():
     Independently evaluate the conversation and determine whether Irrelevancy is yes or no. Then judge if the annotation label is correct or incorrect. This entry meets this criterion if your independent determination matches the recorded label above. This entry does not meet this criterion if your independent determination disagrees with the recorded label.
     """,
     "drift" : """
+
+    The system prompt for the assistant is: {system_prompt}
+    
+    The assignment details for this entry is: {assignment_context}
 
     This entry's annotation label for Drift is: {recorded_label}
 
@@ -242,7 +280,7 @@ def main():
     #    {"role": "assistant", "content": response_text},
     #]
 
-    jobs = message_builder(filePath, criteria)
+    jobs = message_builder(filePath, criteria, system_prompt)
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         tasks = [executor.submit(evaluate, job) for job in jobs]
