@@ -4,6 +4,7 @@ from time import perf_counter, sleep
 import json
 import csv
 import os
+import re
 
 load_dotenv()
 
@@ -301,13 +302,20 @@ def store_results(output):
     global failure_count
 
     try:
-        output.strip()
-        if output.startswith("```json"):
-            output = output[7:]
+        # Preprocessing to avoid failure
+        output = output.strip()
 
-        if output.endswith("```"):
-            output = output[:-3]
-        output.strip()
+        output = re.sub(r'^```(?:json)?\s*', '', output)
+        output = re.sub(r'\s*```$', '', output)
+
+        # Escape backslashes that are not valid JSON escapes
+        output = re.sub(
+            r'\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})',
+            r'\\\\',
+            output
+        )
+
+        output = output.strip()
 
         data = json.loads(output)
 
