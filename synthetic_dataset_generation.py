@@ -18,7 +18,7 @@ REQUEST_INTERVAL = 6.5
 MAX_BACKOFF = 120
 MAX_CONSECUTIVE_429 = 10
 
-next_id = 0
+next_id = 1129
 try:
     with open(CSV_FILE, "r", newline="", encoding="utf-8") as f:
         next_id = sum(1 for _ in f)
@@ -301,6 +301,14 @@ def store_results(output):
     global failure_count
 
     try:
+        output.strip()
+        if output.startswith("```json"):
+            output = output[7:]
+
+        if output.endswith("```"):
+            output = output[:-3]
+        output.strip()
+
         data = json.loads(output)
 
         with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
@@ -325,6 +333,8 @@ def store_results(output):
     except json.JSONDecodeError:
         failure_count += 1
         print("Failed to decode JSON: ", failure_count)
+        print("\nFAILED OUTPUT:")
+        print(output, "\n")
         return False
 
 
