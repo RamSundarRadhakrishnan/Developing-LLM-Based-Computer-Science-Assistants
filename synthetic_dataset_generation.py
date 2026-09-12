@@ -9,7 +9,7 @@ load_dotenv()
 
 client = genai.Client()
 
-MODEL = "gemini-3.8-flash"
+MODEL = "gemini-3.5-flash-lite"
 CSV_FILE = "synthetic_dataset.csv"
 
 N = 2
@@ -294,25 +294,38 @@ def send_request(prompt, new_conversation=False):
                 raise
 
 
+failure_count = 0
+
+
 def store_results(output):
-    data = json.loads(output)
+    global failure_count
 
-    with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+    try:
+        data = json.loads(output)
 
-        for item in data:
-            writer.writerow([
-                get_next_id(),
-                current_assignment_context,
-                json.dumps(
-                    item["previous_conversation"],
-                    ensure_ascii=False
-                ),
-                item["current_turn"]["user"],
-                item["current_turn"]["assistant"],
-                item["irrelevancy"],
-                item["solution_proximality"]
-            ])
+        with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+
+            for item in data:
+                writer.writerow([
+                    get_next_id(),
+                    current_assignment_context,
+                    json.dumps(
+                        item["previous_conversation"],
+                        ensure_ascii=False
+                    ),
+                    item["current_turn"]["user"],
+                    item["current_turn"]["assistant"],
+                    item["irrelevancy"],
+                    item["solution_proximality"]
+                ])
+
+        return True
+
+    except json.JSONDecodeError:
+        failure_count += 1
+        print("Failed to decode JSON: ", failure_count)
+        return False
 
 
 def start_new_conversation():
