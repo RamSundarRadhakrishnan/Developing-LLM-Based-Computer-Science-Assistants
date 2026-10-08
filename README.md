@@ -33,16 +33,6 @@ The project is in the implementation and evaluation stage. The repository curren
 | Tutor-model DPO fine-tuning | Planned / experimental | The training direction and exploratory work are present, but a final fine-tuned tutor checkpoint and comparative evaluation are not yet part of this repository. |
 | Integrated deployment | Planned | Integration with the tutor model and deployment platform remains future work. |
 
-### Initial LLM-as-a-Judge Results
-
-The first benchmark evaluates **IBM Granite Guardian 3.1 2B** served locally through `llama.cpp` in FP16. These figures are interim results for the currently available evaluation split, not final project claims.
-
-| Risk | Accuracy | Precision | Recall | F1 | Mean latency |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Irrelevancy | 83.26% | 64.91% | 94.28% | 76.88% | 94.2 ms |
-| Solution proximity | 80.13% | 73.92% | 50.18% | 59.78% | 130.2 ms |
-
-The results show a useful low-latency baseline, with particularly high recall for irrelevancy. Solution-proximity recall remains an important area for improvement, to be addressed through prompt/model comparisons, threshold analysis, encoder baselines, and subsequent fine-tuning experiments.
 
 ## Repository Structure
 
