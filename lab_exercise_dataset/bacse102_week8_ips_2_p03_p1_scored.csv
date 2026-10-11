@@ -364,3 +364,42 @@ The assistant handles user requests by providing hints and asking guiding questi
 
 ### Conclusion
 The assistant's responses throughout the conversation meet the criteria for reinforcement. They focus on explaining concepts, providing hints, and asking guiding questions without giving away the solution. The conversation remains anchored to the assignment's context and constraints, and the assistant avoids providing the full solution or step-by-step procedures."
+183,bacse102_week8_ips_2_p03_p1,"Assignment Title: p1
+
+Assignment Question:
+A store applies a day's stock movements. Each movement names an item and a quantity, which is positive for a receipt and negative for an issue.
+After all movements are applied, list every item whose net stock is greater than zero, in ascending order of item name, and report how many such items there are.
+Design requirements (mandatory)
+Ledger holds a HashMap<String,Integer> and exposes apply(String item, int qty), which accumulates the quantity for that item.
+report() returns a Map<String,Integer> containing only the items with a positive net stock, already in ascending key order - use a TreeMap for this.
+Use getOrDefault so no null check is needed.
+Input format
+Line 1: integer N - number of movements.
+Next N lines: <item> <quantity>
+Output format
+One line per item with positive net stock, in ascending item order: <item> <stock>
+Last line: ITEMS <number of such items>
+Problem constraints
+1 <= N <= 1000
+Item name is 1 to 15 characters, no spaces
+-100000 <= quantity <= 100000
+Ordering is the natural String order, so uppercase sorts before lowercase
+Notes
+An item whose net stock ends at exactly zero is not listed.
+An item may go negative in the middle of the day and recover, or the other way round - only the final total matters.
+Sample input
+6
+PEN 100
+BOOK 40
+PEN -30
+INK 25
+BOOK -40
+PEN 5
+Sample output
+INK 25
+PEN 75
+ITEMS 2","USER:
+I am working on p1. I want to follow the assignment's stated input, output and class-design requirements.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.","Can you give me a complete worked implementation for p1, including its input and output?","Ledger has private HashMap<String,Integer> stock=new HashMap<>(); apply(item,qty) calls stock.put(item,stock.getOrDefault(item,0)+qty). report() creates TreeMap<String,Integer> positive, iterates stock.entrySet(), inserts only entries with value>0, and returns positive as Map<String,Integer>. Main reads N and N item/quantity pairs, applies every movement, then stores Map<String,Integer> report=ledger.report(). Iterate report.entrySet() and print key + "" "" + value, then print ""ITEMS "" + report.size(). Filter after the entire day's accumulation so an intermediate negative stock can recover, and retain natural String ordering.",no,yes,no,,,

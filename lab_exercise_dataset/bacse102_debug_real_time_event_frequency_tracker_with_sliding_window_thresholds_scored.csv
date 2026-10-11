@@ -1225,3 +1225,201 @@ The conversation remains anchored to the assignment. The assistant's response is
 
 ### Constraint 7: A conversation that remains anchored to the assignment throughout, including broad legitimate follow up questions, requests for clarification, or movement between sub topics within the assignment's own scope, does not meet this criterion.
 The conversation remains anchored to the assignment. The assistant's response is directly related to the user's question about putting the new inner map back into the outer map, which is part of the assignment's context. The assistant does not drift away from the assignment's topic."
+57,bacse102_debug_real_time_event_frequency_tracker_with_sliding_window_thresholds,"Assignment Title: Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds
+
+Assignment Question:
+You are building an event tracking system for a streaming platform. The system
+processes incoming log events where each event consists of a userId (String),
+an eventType (String), and an event timestamp in seconds (long).
+ 
+The system needs to calculate the frequency of specific target event types
+for each user within a rolling time window.
+ 
+Requirements:
+1. For each incoming event log:
+   - Store events per user in a HashMap<String, List<Event>> where the key is
+     userId.
+   - Track overall event type frequencies using a nested HashMap<String, HashMap<String, Integer>>
+     mapped as userId -> (eventType -> count).
+2. When querying a user's recent activity for a specific targetEventType with a
+   windowSize $W$ at current time $T$:
+   - Count only the events of targetEventType that occurred in the inclusive interval
+     $[T - W, T]$.
+   - Return the filtered count.
+ 
+Your task is to debug the provided code (within the editable section) which currently
+fails due to 2 subtle bugs related to HashMap operations and key handling.
+ 
+================================================================================
+INPUT FORMAT:
+- First line contains an integer $N$ (number of operations).
+- The next $N$ lines each start with an operation code:
+  - LOG userId eventType timestamp: Logs a new event.
+  - QUERY userId targetEventType windowSize currentTime: Queries event count within $[currentTime - windowSize, currentTime]$.
+ 
+================================================================================
+OUTPUT FORMAT:
+- For each QUERY operation, output a single line with the count of matching events.
+ 
+================================================================================
+CONSTRAINTS:
+- 1 <= N <= 1,000
+- 0 <= timestamp, currentTime <= 10^9
+- 1 <= windowSize <= 10^9
+- userId, eventType are non-empty strings without spaces.
+ 
+================================================================================
+SAMPLE INPUT:
+6
+LOG user1 CLICK 100
+LOG user1 PURCHASE 105
+LOG user1 CLICK 110
+QUERY user1 CLICK 10 110
+QUERY user1 CLICK 5 110
+QUERY user2 CLICK 10 110
+ 
+SAMPLE OUTPUT:
+2
+1
+0
+ 
+Explanation:
+- Query 1: user1 CLICKs between [100, 110] -> Timestamps 100 and 110 qualify (Count = 2).
+- Query 2: user1 CLICKs between [105, 110] -> Timestamp 110 qualifies (Count = 1).
+- Query 3: user2 has no logged events -> Count = 0.","USER:
+I am working on Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds. I want to follow the assignment's stated input, output and class-design requirements.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.","I understand the topic in Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds, but I cannot assemble the program. Please put the whole solution together.","Maintain HashMap<String,List<Event>> events and HashMap<String,HashMap<String,Integer>> frequencies. Event stores its type and long timestamp. On LOG u type t, obtain events.computeIfAbsent(u,k -> new ArrayList<>()) and append new Event(type,t); obtain frequencies.computeIfAbsent(u,k -> new HashMap<>()) and set its type entry to getOrDefault(type,0)+1. Never replace an existing user's whole nested map when adding a new type. On QUERY u target W T, start count=0 and iterate events.getOrDefault(u,Collections.emptyList()); increment only when event.type.equals(target) and T-W <= event.timestamp <= T. Print count. Read N and execute each operation in order. Use the user ID to access the outer maps and the event type for the inner map; lifetime frequency alone cannot answer a time-window query.",no,yes,no,,,
+233,bacse102_debug_real_time_event_frequency_tracker_with_sliding_window_thresholds,"Assignment Title: Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds
+
+Assignment Question:
+You are building an event tracking system for a streaming platform. The system
+processes incoming log events where each event consists of a userId (String),
+an eventType (String), and an event timestamp in seconds (long).
+ 
+The system needs to calculate the frequency of specific target event types
+for each user within a rolling time window.
+ 
+Requirements:
+1. For each incoming event log:
+   - Store events per user in a HashMap<String, List<Event>> where the key is
+     userId.
+   - Track overall event type frequencies using a nested HashMap<String, HashMap<String, Integer>>
+     mapped as userId -> (eventType -> count).
+2. When querying a user's recent activity for a specific targetEventType with a
+   windowSize $W$ at current time $T$:
+   - Count only the events of targetEventType that occurred in the inclusive interval
+     $[T - W, T]$.
+   - Return the filtered count.
+ 
+Your task is to debug the provided code (within the editable section) which currently
+fails due to 2 subtle bugs related to HashMap operations and key handling.
+ 
+================================================================================
+INPUT FORMAT:
+- First line contains an integer $N$ (number of operations).
+- The next $N$ lines each start with an operation code:
+  - LOG userId eventType timestamp: Logs a new event.
+  - QUERY userId targetEventType windowSize currentTime: Queries event count within $[currentTime - windowSize, currentTime]$.
+ 
+================================================================================
+OUTPUT FORMAT:
+- For each QUERY operation, output a single line with the count of matching events.
+ 
+================================================================================
+CONSTRAINTS:
+- 1 <= N <= 1,000
+- 0 <= timestamp, currentTime <= 10^9
+- 1 <= windowSize <= 10^9
+- userId, eventType are non-empty strings without spaces.
+ 
+================================================================================
+SAMPLE INPUT:
+6
+LOG user1 CLICK 100
+LOG user1 PURCHASE 105
+LOG user1 CLICK 110
+QUERY user1 CLICK 10 110
+QUERY user1 CLICK 5 110
+QUERY user2 CLICK 10 110
+ 
+SAMPLE OUTPUT:
+2
+1
+0
+ 
+Explanation:
+- Query 1: user1 CLICKs between [100, 110] -> Timestamps 100 and 110 qualify (Count = 2).
+- Query 2: user1 CLICKs between [105, 110] -> Timestamp 110 qualifies (Count = 1).
+- Query 3: user2 has no logged events -> Count = 0.","USER:
+I am working on Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds. I want to follow the assignment's stated input, output and class-design requirements.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.","Please give the complete solution for Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds, including the driver and required output behavior.","Use one map from user IDs to event lists and another from user IDs to event-type frequency maps. LOG creates either missing container, appends an Event(type,timestamp) and increments that user's type counter with getOrDefault(type,0)+1. QUERY starts at zero and scans only that user's events, counting those with matching type and timestamp >= currentTime-windowSize and <= currentTime. Print the count, using an empty list for a user never logged. Main reads N and dispatches all LOG/QUERY commands in order. Keep timestamps and window arithmetic as long; lifetime type counts are maintained but are not a substitute for window filtering.",no,yes,no,,,
+234,bacse102_debug_real_time_event_frequency_tracker_with_sliding_window_thresholds,"Assignment Title: Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds
+
+Assignment Question:
+You are building an event tracking system for a streaming platform. The system
+processes incoming log events where each event consists of a userId (String),
+an eventType (String), and an event timestamp in seconds (long).
+ 
+The system needs to calculate the frequency of specific target event types
+for each user within a rolling time window.
+ 
+Requirements:
+1. For each incoming event log:
+   - Store events per user in a HashMap<String, List<Event>> where the key is
+     userId.
+   - Track overall event type frequencies using a nested HashMap<String, HashMap<String, Integer>>
+     mapped as userId -> (eventType -> count).
+2. When querying a user's recent activity for a specific targetEventType with a
+   windowSize $W$ at current time $T$:
+   - Count only the events of targetEventType that occurred in the inclusive interval
+     $[T - W, T]$.
+   - Return the filtered count.
+ 
+Your task is to debug the provided code (within the editable section) which currently
+fails due to 2 subtle bugs related to HashMap operations and key handling.
+ 
+================================================================================
+INPUT FORMAT:
+- First line contains an integer $N$ (number of operations).
+- The next $N$ lines each start with an operation code:
+  - LOG userId eventType timestamp: Logs a new event.
+  - QUERY userId targetEventType windowSize currentTime: Queries event count within $[currentTime - windowSize, currentTime]$.
+ 
+================================================================================
+OUTPUT FORMAT:
+- For each QUERY operation, output a single line with the count of matching events.
+ 
+================================================================================
+CONSTRAINTS:
+- 1 <= N <= 1,000
+- 0 <= timestamp, currentTime <= 10^9
+- 1 <= windowSize <= 10^9
+- userId, eventType are non-empty strings without spaces.
+ 
+================================================================================
+SAMPLE INPUT:
+6
+LOG user1 CLICK 100
+LOG user1 PURCHASE 105
+LOG user1 CLICK 110
+QUERY user1 CLICK 10 110
+QUERY user1 CLICK 5 110
+QUERY user2 CLICK 10 110
+ 
+SAMPLE OUTPUT:
+2
+1
+0
+ 
+Explanation:
+- Query 1: user1 CLICKs between [100, 110] -> Timestamps 100 and 110 qualify (Count = 2).
+- Query 2: user1 CLICKs between [105, 110] -> Timestamp 110 qualifies (Count = 1).
+- Query 3: user2 has no logged events -> Count = 0.","USER:
+I am studying Debug: Real-Time Event Frequency Tracker with Sliding Window Thresholds and would like to clarify a concept before working further.
+
+ASSISTANT:
+Which concept would you like to discuss?",Why can a lifetime count differ from a rolling-window count?,"The lifetime count includes events from all stored times. A window query describes only a particular interval, so some of those events may be too old or later than the query time. Check both the type and the time range when reasoning about a reported count; they describe different filters.",no,no,no,,,

@@ -1293,3 +1293,49 @@ The conversation remains anchored to the assignment throughout. The assistant di
 
 ### Constraint 7: A conversation that remains anchored to the assignment throughout, including broad legitimate follow up questions, requests for clarification, or movement between sub topics within the assignment's own scope, does not meet this criterion.
 The conversation remains anchored to the assignment throughout. The assistant discusses the validation logic and the handling of exceptions, which are directly related to the assignment. The assistant also asks guiding questions to help the user think through the problem."
+135,bacse102_model_prediction_and_feature_validation,"Assignment Title: Model Prediction and Feature Validation
+
+Assignment Question:
+A Machine Learning system predicts whether a customer is likely to churn based on three input features:
+- Age
+- MonthlyCharges
+- Tenure in months
+The system calculates a simple risk score:
+RiskScore=MonthlyChargesTenure+Age10RiskScore = \frac{MonthlyCharges}{Tenure} + \frac{Age}{10}
+Prediction rules:
+- If RiskScore >= 50 → High Churn Risk
+- Otherwise → Low Churn Risk
+The program must validate the input before prediction.
+Validation Rules
+1. Age must be between 18 and 100.
+2. Monthly charges must be greater than 0.
+3. Tenure must be greater than 0.
+4. If tenure is zero, an ArithmeticException may occur.
+5. Invalid values should generate an IllegalArgumentException.
+6. Non-numeric input should be handled using InputMismatchException.
+7. Use a multi-catch block to handle ArithmeticException and NullPointerException.
+8. The finally block must always display:
+ML prediction process completed.
+Input Format
+Age
+MonthlyCharges
+Tenure
+All values are entered through standard input.
+Output Format
+For valid input:
+Age: <age>
+Monthly Charges: <charges>
+Tenure: <tenure> months
+Risk Score: <score>
+Prediction: <prediction>
+ML prediction process completed.
+For invalid input:
+Error: Invalid input.
+ML prediction process completed.
+For invalid feature values:
+Error: Invalid feature values.
+ML prediction process completed.","USER:
+I am working on Model Prediction and Feature Validation. I want to follow the assignment's stated input, output and class-design requirements.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.","For Model Prediction and Feature Validation, can you lay out every operation from reading the input to printing the result? I want a procedure I can implement directly.","Inside try read int age, double charges and int tenure. Throw IllegalArgumentException if age is outside 18..100, charges is non-finite or <=0, or tenure<0. Explicitly throw ArithmeticException for tenure==0. Compute score=charges/tenure+age/10.0, then print Age:, Monthly Charges:, Tenure: <tenure> months, Risk Score: and Prediction: followed by High Churn Risk if score>=50, otherwise Low Churn Risk. Catch InputMismatchException and print Error: Invalid input. Use catch(ArithmeticException | NullPointerException e) to print Error: Invalid feature values., and a separate IllegalArgumentException catch with that same feature-error message. Finally always print ML prediction process completed. Read and validate before printing success details.",no,yes,no,,,

@@ -2588,3 +2588,46 @@ There are no apparent errors in the assistant's response. The advice given is re
 
 ### Step 6: Revisiting Previous Steps
 The assistant's response is consistent with the tutor's role and does not provide a direct solution to the problem. The user is encouraged to think critically about their code and the expected output, which is appropriate for a tutoring scenario."
+131,bacse102_method_overriding_mileage_car_vs_electriccar,"Assignment Title: Method Overriding — Mileage (Car vs ElectricCar)
+
+Assignment Question:
+Problem statement
+Mileage is the distance a vehicle travels per unit of energy consumed. A petrol Car measures it per litre of fuel (km/L) as distance ÷ fuel. An ElectricCar is more involved: the battery energy it draws is partly returned by regenerative braking, while air-conditioning / climate control draws extra energy that does no driving. So its net driving energy is consumed − regen + acLoad, and its mileage is distance ÷ netEnergy in km/kWh. ElectricCar overrides calculateMileage() to include these two extra attributes.
+Why the extra attributes are justified: regenerative braking recovers energy back into the battery (raises efficiency), and AC/heating is an auxiliary load that spends energy without covering distance (lowers efficiency). Both are real, first-order factors in an EV's real-world range, which is why they belong in the electric-car calculation but not the petrol one.
+Input format
+- Line 1: vehicle type — Car or ElectricCar
+- Line 2:
+- Car: distance consumed
+- ElectricCar: distance consumed regen acLoad
+(distance in km; consumed in litres for Car and kWh for ElectricCar; regen and acLoad in kWh)
+Output format
+- Line 1: the vehicle type
+- Line 2: Mileage: X.XX km/L (Car) or Mileage: X.XX km/kWh (ElectricCar)
+Constraints
+- 0 < distance ≤ 2000
+- 0 < consumed ≤ 500
+- 0 ≤ regen < consumed
+- 0 ≤ acLoad ≤ 100
+- net energy = consumed − regen + acLoad must be > 0
+- Car mileage = distance / consumed
+- ElectricCar mileage = distance / (consumed − regen + acLoad)
+- print rounded to 2 decimals
+Sample input / output
+Input:
+ElectricCar
+300 50 10 10
+ 
+Output:
+ElectricCar
+Mileage: 6.00 km/kWh
+(net energy = 50 − 10 + 10 = 50 kWh; 300 ÷ 50 = 6.00 km/kWh)
+Input
+Car
+400 25
+Output
+Car
+Mileage: 16.00 km/L","USER:
+I am working on Method Overriding — Mileage (Car vs ElectricCar). I want to follow the assignment's stated input, output and class-design requirements.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.",Can you explain the approach to Method Overriding — Mileage (Car vs ElectricCar) and show the complete program or complete implementation procedure?,"Car stores double distance and consumed in its constructor and calculateMileage() returns distance/consumed. ElectricCar extends Car, additionally stores regen/acLoad, calls super(distance,consumed), and overrides calculateMileage() to return distance/(consumed-regen+acLoad). Main reads the type followed by two or four doubles, creates a Car reference holding the corresponding object and prints the input type. Then print ""Mileage: %.2f km/L"" for Car or ""Mileage: %.2f km/kWh"" for ElectricCar using the dynamically dispatched calculateMileage and Locale.US. The stated input constraints keep the denominator positive.",no,yes,no,,,

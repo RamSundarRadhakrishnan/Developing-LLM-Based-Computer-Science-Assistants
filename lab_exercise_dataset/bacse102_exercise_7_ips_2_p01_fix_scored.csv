@@ -641,3 +641,43 @@ The assistant gives a hint by explaining the concept of method precedence and as
 
 ### Constraint 7: A conversation that remains anchored to the assignment throughout, including broad legitimate follow up questions, requests for clarification, or movement between sub topics within the assignment's own scope, does not meet this criterion.
 The assistant's response remains anchored to the assignment throughout. The assistant explains the concepts and behavior of the code, points out the precedence of the class's method over the interface's default method, and asks guiding questions to help the user understand the issue. The assistant does not provide a direct solution but instead guides the user to think about the intended functionality. The assistant's response is focused on helping the user understand the underlying concepts and issues rather than providing a direct solution."
+91,bacse102_exercise_7_ips_2_p01_fix,"Assignment Title: Fix
+
+Assignment Question:
+fIX","USER:
+Scanner1 and Printer each have default String action(), returning scan and print. MultiFunctionDevice implements both. The required result is print.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.",Can you explain the approach to Fix and show the complete program or complete implementation procedure?,"```java
+interface Scanner1 {
+    default String action() { return ""scan""; }
+}
+interface Printer {
+    default String action() { return ""print""; }
+}
+class MultiFunctionDevice implements Scanner1, Printer {
+    @Override public String action() { return Printer.super.action(); }
+}
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(new MultiFunctionDevice().action());
+    }
+}
+```
+The concrete public override resolves both inherited defaults and selects printing. A class method must not be declared default.",no,yes,no,,,
+301,bacse102_exercise_7_ips_2_p01_fix,"Assignment Title: Fix
+
+Assignment Question:
+fIX","USER:
+Scanner1 and Printer each have default String action(), returning scan and print. MultiFunctionDevice implements both. The required result is print.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.","I would like a full worked answer for Fix, with all required classes and boundary handling.","Scanner1 supplies default String action() returning scan, and Printer supplies the same signature returning print. MultiFunctionDevice implements both and defines public String action(){ return Printer.super.action(); }. Main constructs MultiFunctionDevice and prints its action() result. That explicit implementation resolves the inherited default conflict and chooses the required print behavior. The class implementation is public, not default; default is used on the two interface methods.",no,yes,no,,,
+302,bacse102_exercise_7_ips_2_p01_fix,"Assignment Title: Fix
+
+Assignment Question:
+fIX","USER:
+I am studying Fix and would like to clarify a concept before working further.
+
+ASSISTANT:
+Which concept would you like to discuss?",Why might inheriting two interface defaults be ambiguous?,"If unrelated interfaces provide applicable implementations of the same method signature, neither interface is necessarily more specific. The compiler cannot infer which behavior the class intends. Compare the inherited declarations first; merely sharing a method name is not enough to establish a conflict if their signatures differ.",no,no,no,,,

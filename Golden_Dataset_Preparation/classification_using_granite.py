@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from time import perf_counter, sleep
 
 
 guardian_client = OpenAI(
@@ -98,14 +99,14 @@ def parse_response(response):
     return score, trace
 
 
-def run_guardian(messages_without_block, criteria, think=False, schema=None):
+def run_guardian(messages_without_block, criteria, think=False, schema=None, temperature=0):
     messages = messages_without_block + [
         {
             "role": "user",
             "content": build_guardian_block(
                 criteria,
                 think=think,
-                schema=schema,
+                schema=schema
             ),
         },
     ]
@@ -113,12 +114,19 @@ def run_guardian(messages_without_block, criteria, think=False, schema=None):
     completion = guardian_client.chat.completions.create(
         model="granite-guardian",
         messages=messages,
-        temperature=0,
-        max_tokens=2048 if think else 64,
+        temperature=temperature,
+        max_tokens=8192 if think else 64,
     )
 
     response = completion.choices[0].message.content.strip()
-    return parse_response(response)
+    score, trace = parse_response(response)
+    if score not in {"yes", "no"}:
+        print("\nINVALID GRANITE RESPONSE:")
+        print(f"finish_reason: {completion.choices[0].finish_reason}")
+        print(f"usage: {completion.usage}")
+        print(response)
+        print()
+    return score, trace
 
 
 def message_builder(filepath):
@@ -134,16 +142,97 @@ def message_builder(filepath):
         return messages
     return df["Transcript"].apply(parse_transcript).tolist()
 
-def evaluate(conversation_id, conversation, criterion_name, criterion_text):
-    score, trace = run_guardian(conversation, criteria=criterion_text, think=True, schema=VIOLATION_SCHEMA)
-    return {
-        "id" : conversation_id,
-        "criterion" : criterion_name,
-        "conversation" : json.dumps(conversation, ensure_ascii=False),
-        "score" : score,
-        "trace" : trace
-    }
+def format_previous_conversation(messages):
+    parts = []
 
+    for message in messages:
+        if message["role"] == "user":
+            speaker = "USER"
+        elif message["role"] == "assistant":
+            speaker = "ASSISTANT"
+        else:
+            raise ValueError(f"Unexpected role: {message['role']}")
+
+        parts.append(f"{speaker}:\n{message['content']}")
+
+    return "\n\n".join(parts)
+
+
+def split_conversation(conversation):
+    if len(conversation) < 2:
+        raise ValueError("Conversation must contain at least one user-assistant pair")
+
+    if conversation[-2]["role"] != "user" or conversation[-1]["role"] != "assistant":
+        raise ValueError(
+            f"Conversation does not end in user-assistant pair: "
+            f"{conversation[-2]['role']} -> {conversation[-1]['role']}"
+        )
+
+    previous_conversation = format_previous_conversation(conversation[:-2])
+    user_query = conversation[-2]["content"]
+    assistant_response = conversation[-1]["content"]
+
+    return previous_conversation, user_query, assistant_response
+
+def evaluate(conversation_id, conversation, criterion_name, criterion_text):
+    max_attempts = 3
+
+    for attempt in range(1, max_attempts + 1):
+        start_time = perf_counter()
+
+        try:
+            score, trace = run_guardian(
+                conversation,
+                criteria=criterion_text,
+                think=True,
+                schema=VIOLATION_SCHEMA,
+                temperature= 0 if attempt==1 else 0.1
+            )
+
+            latency_ms = (perf_counter() - start_time) * 1000
+
+            if score in {"yes", "no"}:
+                print(
+                    f"[conversation={conversation_id} "
+                    f"criterion={criterion_name}] "
+                    f"{latency_ms:.2f} ms "
+                    f"attempt={attempt}",
+                    flush=True
+                )
+
+                return {
+                    "id": conversation_id,
+                    "criterion": criterion_name,
+                    "score": score,
+                    "trace": trace
+                }
+
+            print(
+                f"[conversation={conversation_id} "
+                f"criterion={criterion_name}] "
+                f"invalid score={score!r}, "
+                f"attempt={attempt}/{max_attempts}",
+                flush=True
+            )
+
+        except Exception as e:
+            print(
+                f"[conversation={conversation_id} "
+                f"criterion={criterion_name}] "
+                f"error={e!r}, "
+                f"attempt={attempt}/{max_attempts}",
+                flush=True
+            )
+
+        if attempt < max_attempts:
+            sleep(1)
+
+    return {
+        "id": conversation_id,
+        "criterion": criterion_name,
+        "score": None,
+        "trace": None
+    }
 
 def main():
     parser = argparse.ArgumentParser()
@@ -290,9 +379,61 @@ def main():
                 )
 
     results = [future.result() for future in as_completed(tasks)]
-
     results_df = pd.DataFrame(results)
-    results_df.to_csv(finalPath, index=False)
+
+    invalid_scores = results_df[~results_df["score"].isin(["yes", "no"])]
+
+    if not invalid_scores.empty:
+        raise ValueError(
+            f"Invalid Granite scores in {filePath.name}:\n"
+            f"{invalid_scores[['id', 'criterion', 'score']].to_string(index=False)}"
+        )
+
+    rows = []
+
+    for conversation_id, conversation in enumerate(messages):
+        conversation_results = results_df[results_df["id"] == conversation_id]
+
+        if len(conversation_results) != 3:
+            raise ValueError(
+                f"Expected 3 results for conversation {conversation_id}, "
+                f"got {len(conversation_results)}"
+            )
+
+        result_map = {
+            row["criterion"]: row
+            for _, row in conversation_results.iterrows()
+        }
+
+        expected_criteria = {"irrelevancy", "solution_proximity", "drift"}
+        missing_criteria = expected_criteria - set(result_map)
+
+        if missing_criteria:
+            raise ValueError(
+                f"Missing criteria for conversation {conversation_id}: "
+                f"{missing_criteria}"
+            )
+
+        previous_conversation, user_query, assistant_response = split_conversation(conversation)
+
+        rows.append({
+            "id": conversation_id,
+            "assignment_id": filePath.stem,
+            "assignment_context": assignment_context,
+            "previous_conversation": previous_conversation,
+            "user_query": user_query,
+            "assistant_response": assistant_response,
+            "irrelevancy": result_map["irrelevancy"]["score"],
+            "solution_proximality": result_map["solution_proximity"]["score"],
+            "drift": result_map["drift"]["score"],
+            "irrelevancy_trace": result_map["irrelevancy"]["trace"],
+            "solution_proximality_trace": result_map["solution_proximity"]["trace"],
+            "drift_trace": result_map["drift"]["trace"]
+        })
+
+    final_df = pd.DataFrame(rows)
+
+    final_df.to_csv(finalPath, index=False)
 
 if __name__=="__main__":
     main()

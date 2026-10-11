@@ -1737,3 +1737,31 @@ The assistant's response is directly related to the assignment context, which in
 - ""So the key insight is: we need to distinguish between: - `amount == 0`: Valid case, return 0 coins. - `amount < 0`: Invalid case, return some large value indicating impossibility.""
 
 The assistant's response is anchored to the assignment and provides relevant guidance on fixing the bug, which is consistent with the assignment context."
+134,bacse102_minimum_coins_for_change_fix_the_negative_amount_base_case_bug,"Assignment Title: Minimum Coins for Change - Fix the Negative Amount Base Case Bug
+
+Assignment Question:
+A program computes the minimum number of coins needed to make a target amount from a given list of coin denominations, using dynamic programming with a HashMap memo table. The recursion should treat exactly reaching amount 0 as needing 0 coins, and any amount that goes negative (overshooting the target) as impossible.
+ 
+The code given to students uses a single base case, amount <= 0, that treats negative amounts the same as exactly zero. This makes overshooting the amount with a coin look ""free"", which corrupts the result.
+ 
+Identify the error and fix it so the base cases are handled correctly.
+ 
+Input Format:
+Line 1: n (number of coin denominations)
+Line 2: n space-separated coin values
+Line 3: amount (target amount)
+ 
+Output Format:
+If the amount can be formed: Minimum Coins: <value>
+If it cannot be formed using the given coins: Not Possible
+Sample Input:
+3
+1 2 5
+11
+ 
+Sample Output:
+Minimum Coins: 3","USER:
+I am working on Minimum Coins for Change - Fix the Negative Amount Base Case Bug. I want to follow the assignment's stated input, output and class-design requirements.
+
+ASSISTANT:
+Understood. We can discuss this assignment using those requirements.",I have not started Minimum Coins for Change - Fix the Negative Amount Base Case Bug. Please write the entire solution with the required classes and validation.,"Read n, the positive coin denominations and target amount. Define solve(a) with a HashMap<Integer,Integer> memo and sentinel INF=Integer.MAX_VALUE: if a==0 return 0; if a<0 return INF; if memo contains a return it. Otherwise set best=INF and for each coin c calculate sub=solve(a-c); only when sub!=INF set best=min(best,sub+1). Store memo.put(a,best) and return best. Call solve(target); print Not Possible for INF, otherwise ""Minimum Coins: "" + result. The exact-zero and negative base cases are separate, and checking INF before addition prevents overflow from making an impossible branch look optimal.",no,yes,no,,,
