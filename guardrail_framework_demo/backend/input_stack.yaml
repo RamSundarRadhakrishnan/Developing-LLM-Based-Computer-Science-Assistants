@@ -1,0 +1,28 @@
+fail_policy: fail_closed
+layers:
+  prompt_heuristics:
+    type: heuristics
+    stage: input
+    enabled: true
+    settings:
+      threshold: 0.75
+  irrelevancy_encoder:
+    type: encoder_classifier
+    stage: input
+    enabled: true
+    settings:
+      checkpoint_dir: ../../irrelevancy_modernbert
+      label: irrelevant
+      threshold: 0.5
+  llm_input_judge:
+    type: llm_as_judge
+    stage: input
+    enabled: true
+    settings:
+      model: nvidia/nemotron-3.5-content-safety:free
+      mode: judge
+      temperature: 0
+      max_tokens: 512
+execution:
+  - mode: serial
+    layers: [prompt_heuristics, irrelevancy_encoder, llm_input_judge]

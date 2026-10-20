@@ -1,0 +1,43 @@
+fail_policy: fail_closed
+layers:
+  response_heuristics:
+    type: heuristics
+    stage: output
+    enabled: true
+    settings:
+      threshold: 0.75
+  solution_proximity_encoder:
+    type: encoder_classifier
+    stage: output
+    enabled: true
+    settings:
+      checkpoint_dir: ../../solution_proximality_modernbert
+      label: direct_solution
+      threshold: 0.5
+  llm_output_judge:
+    type: llm_as_judge
+    stage: output
+    enabled: true
+    settings:
+      model: nvidia/nemotron-3.5-content-safety:free
+      mode: judge
+      temperature: 0
+      max_tokens: 512
+  canary_detector:
+    type: canary
+    stage: output
+    enabled: true
+    settings:
+      length: 32
+      spacing_chars: 50
+      partial_threshold: 0.5
+  context_drift:
+    type: drift
+    stage: output
+    enabled: true
+    settings:
+      dataset_path: ../../encoder_classifier/drift_synthetic_dataset_raahul.csv
+      model_name: sentence-transformers/all-MiniLM-L6-v2
+execution:
+  - mode: serial
+    layers: [response_heuristics, solution_proximity_encoder, llm_output_judge, canary_detector, context_drift]
